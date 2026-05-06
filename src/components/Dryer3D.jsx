@@ -291,7 +291,7 @@ const Dryer3D = ({ dryer, size = 'large' }) => {
 
         {/* === COMPANY LOGO === */}
         <text x="200" y="70" fill="rgba(255,255,255,0.15)" fontSize="11" fontFamily="'Syne'" textAnchor="middle" fontWeight="800" letterSpacing="3">
-          KONSERVIS
+          KONSERVI
         </text>
 
         {/* === COMPLETION CELEBRATION === */}

@@ -77,7 +77,7 @@ function AppInner() {
                 display:'flex', alignItems:'center', justifyContent:'center', fontSize:14,
               }}>🌾</div>
               <div>
-                <div style={{ fontFamily:"'Syne'", fontWeight:800, fontSize:13, color:'#f0f6ff', letterSpacing:1 }}>KONSERVIS</div>
+                <div style={{ fontFamily:"'Syne'", fontWeight:800, fontSize:13, color:'#f0f6ff', letterSpacing:1 }}>KONSERVI</div>
                 <div style={{ fontSize:8, color:'#38bdf8', letterSpacing:2, fontFamily:"'Space Mono'" }}>DIGITAL TWIN</div>
               </div>
             </div>

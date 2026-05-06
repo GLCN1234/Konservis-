@@ -55,7 +55,7 @@ export const WEATHER = {
 };
 
 /**
- * DRYER HARDWARE SPECS (Konservis Hybrid Electric Dryer)
+ * DRYER HARDWARE SPECS (Konservi Hybrid Electric Dryer)
  *   Heating element max power: 3.0 kW
  *   Fan motor max power:        0.55 kW
  *   Thermal mass constant:      8 min (time to reach steady state)
