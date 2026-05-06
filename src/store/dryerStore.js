@@ -66,7 +66,7 @@ export const WEATHER = {
  */
 
 const CROP_KEYS = ['maize','cassava','pepper','cocoa','rice','groundnut'];
-const QUALITIES = ['Excellent','Excellent','Good','Good','Fair'];
+
 
 // Seed realistic historical batches so Analytics shows data immediately
 const seedBatches = (dryerId) => {
