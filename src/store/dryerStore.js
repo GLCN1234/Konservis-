@@ -65,29 +65,33 @@ export const WEATHER = {
  *   Motor temp rise rate:       0.75 °C/min per unit fan load
  */
 
+const CROP_KEYS = ['maize','cassava','pepper','cocoa','rice','groundnut'];
+const QUALITIES = ['Excellent','Excellent','Good','Good','Fair'];
+
+// Seed realistic historical batches so Analytics shows data immediately
 const seedBatches = (dryerId) => {
   const cropMap = {
     'dryer-1': ['maize','rice','maize','groundnut','maize','cassava','maize','rice'],
     'dryer-2': ['cassava','pepper','cocoa','cassava','pepper','cassava','cocoa','pepper'],
     'dryer-3': ['cocoa','groundnut','pepper','cocoa','maize','groundnut','cocoa','rice'],
   };
-  const crops = cropMap[dryerId] || ['maize','cassava','pepper','cocoa','rice','groundnut'];
+  const crops = cropMap[dryerId] || CROP_KEYS;
   return Array.from({ length: 8 }, (_, i) => {
     const cropKey = crops[i % crops.length];
     const crop    = CROPS[cropKey];
     const daysAgo = (i + 1) * (2 + Math.floor(Math.random() * 3));
     const dur     = (crop.dryingHours * (0.9 + Math.random() * 0.2)).toFixed(2);
     const fm      = (crop.Me + Math.random() * 1.5).toFixed(2);
-    const energy  = (parseFloat(dur) * 2.8 + Math.random() * 0.5).toFixed(3);
+    const energy  = ((parseFloat(dur) * 2.8 + Math.random() * 0.5)).toFixed(3);
     return {
-      id:            'KV-SEED' + i + dryerId.slice(-1),
-      crop:          cropKey,
-      weight:        Math.round(40 + Math.random() * 80),
-      startTime:     new Date(Date.now() - daysAgo * 86400000).toISOString(),
-      duration:      dur,
-      finalMoisture: fm,
-      energyUsed:    energy,
-      quality:       parseFloat(fm) <= crop.Me + 0.5 ? 'Excellent' : parseFloat(fm) <= crop.Me + 1.5 ? 'Good' : 'Fair',
+      id:           `KV-SEED${i}${dryerId.slice(-1)}`,
+      crop:         cropKey,
+      weight:       Math.round(40 + Math.random() * 80),
+      startTime:    new Date(Date.now() - daysAgo * 86400000).toISOString(),
+      duration:     dur,
+      finalMoisture:fm,
+      energyUsed:   energy,
+      quality:      parseFloat(fm) <= crop.Me + 0.5 ? 'Excellent' : parseFloat(fm) <= crop.Me + 1.5 ? 'Good' : 'Fair',
     };
   });
 };
@@ -137,9 +141,12 @@ export const useDryerStore = create((set, get) => ({
   activeDryer: 'dryer-1',
   weather: 'sunny',
   sensorHistory: {},
+  ambientTemp: 28,
+  ambientHumidity: 60,
 
   setActiveDryer: (id) => set({ activeDryer: id }),
   setWeather:     (w)  => set({ weather: w }),
+  updateRealWeather: ({ambientTemp, ambientHumidity}) => set({ ambientTemp, ambientHumidity }),
 
   startDryer: (id) => set(state => {
     const dryer = state.dryers.find(d => d.id === id);
@@ -254,7 +261,8 @@ export const useDryerStore = create((set, get) => ({
    */
   tick: () => set(state => {
     const weather    = WEATHER[state.weather];
-    const T_ambient  = 28 + weather.tempBoost; // °C
+    // Use real ambient temp if available from weather API, else estimate from weather model
+    const T_ambient  = (state.ambientTemp || 28) + (weather.tempBoost * 0.3); // °C
 
     const newDryers = state.dryers.map(dryer => {
       // Passive cooling when not running
@@ -282,7 +290,7 @@ export const useDryerStore = create((set, get) => ({
       // ── Chamber Humidity (% RH) ──────────────────────────────────
       const fanRemoval  = (dryer.fanSpeed / 100) * 2.0 * dt;
       const evaporation = Math.max(0, dryer.moistureContent - crop.Me) * 0.05 * dt;
-      const ambientSeep = (weather.humidity - dryer.humidity) * 0.012 * dt;
+      const ambientSeep = ((state.ambientHumidity || weather.humidity) - dryer.humidity) * 0.012 * dt;
       const newHumidity = Math.max(10, Math.min(95,
         dryer.humidity - fanRemoval + evaporation + ambientSeep + (Math.random() - 0.5) * 0.20
       ));
@@ -290,7 +298,9 @@ export const useDryerStore = create((set, get) => ({
       // ── Moisture Content (% w.b.) — Page Equation ───────────────
       const tempFactor     = Math.max(0, (newTemp - T_ambient) / Math.max(1, crop.idealTemp - T_ambient));
       const fanFactor      = Math.max(0.01, dryer.fanSpeed / 100);
-      const humPenalty     = (weather.humidity / 100) * 0.35;
+      // Use real ambient RH if available
+      const realRH = state.ambientHumidity || weather.humidity;
+      const humPenalty = (realRH / 100) * 0.35;
       const k_eff          = crop.k * tempFactor * fanFactor * (1 - humPenalty);
       const dMoisture      = -k_eff * Math.max(0, dryer.moistureContent - crop.Me) * dt;
       const newMoisture    = Math.max(crop.Me - 0.3, dryer.moistureContent + dMoisture);

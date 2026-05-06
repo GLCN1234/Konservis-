@@ -11,6 +11,7 @@ import Weather from './pages/Weather';
 import Logs from './pages/Logs';
 import { useDryerStore } from './store/dryerStore';
 import { useSimulation } from './hooks/useSimulation';
+import { useRealWeather } from './hooks/useWeather';
 import './index.css';
 
 function useIsMobile() {
@@ -25,6 +26,7 @@ function useIsMobile() {
 
 function AppInner() {
   useSimulation();
+  useRealWeather(); // fetches real Lagos weather every 10min, feeds into physics
   const { dryers, activeDryer, setActiveDryer } = useDryerStore();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
