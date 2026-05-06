@@ -64,6 +64,34 @@ export const WEATHER = {
  *   Vibration at 100% fan:     ~0.23 g (linear model, well below 0.55 g alert)
  *   Motor temp rise rate:       0.75 °C/min per unit fan load
  */
+
+const seedBatches = (dryerId) => {
+  const cropMap = {
+    'dryer-1': ['maize','rice','maize','groundnut','maize','cassava','maize','rice'],
+    'dryer-2': ['cassava','pepper','cocoa','cassava','pepper','cassava','cocoa','pepper'],
+    'dryer-3': ['cocoa','groundnut','pepper','cocoa','maize','groundnut','cocoa','rice'],
+  };
+  const crops = cropMap[dryerId] || ['maize','cassava','pepper','cocoa','rice','groundnut'];
+  return Array.from({ length: 8 }, (_, i) => {
+    const cropKey = crops[i % crops.length];
+    const crop    = CROPS[cropKey];
+    const daysAgo = (i + 1) * (2 + Math.floor(Math.random() * 3));
+    const dur     = (crop.dryingHours * (0.9 + Math.random() * 0.2)).toFixed(2);
+    const fm      = (crop.Me + Math.random() * 1.5).toFixed(2);
+    const energy  = (parseFloat(dur) * 2.8 + Math.random() * 0.5).toFixed(3);
+    return {
+      id:            'KV-SEED' + i + dryerId.slice(-1),
+      crop:          cropKey,
+      weight:        Math.round(40 + Math.random() * 80),
+      startTime:     new Date(Date.now() - daysAgo * 86400000).toISOString(),
+      duration:      dur,
+      finalMoisture: fm,
+      energyUsed:    energy,
+      quality:       parseFloat(fm) <= crop.Me + 0.5 ? 'Excellent' : parseFloat(fm) <= crop.Me + 1.5 ? 'Good' : 'Fair',
+    };
+  });
+};
+
 const createDryer = (id, name) => ({
   id, name,
   status: 'idle',           // idle | running | paused | complete | fault
@@ -95,7 +123,7 @@ const createDryer = (id, name) => ({
   // SI: kWh
   energyUsed: 0,            // Cumulative energy consumed (kWh)
   logs: [],
-  historicalBatches: [],
+  historicalBatches: seedBatches(id),
   mlEstimatedMinutes: null, // ML prediction: minutes to completion
   efficiencyScore: 0,       // 0–100
 });
